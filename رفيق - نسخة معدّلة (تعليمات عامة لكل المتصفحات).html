@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>رِفيق — رفيقك في رحلة الغسيل الكلوي</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" />
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #F6F3EC; }
+  body { font-family: 'Tajawal', sans-serif; }
+  #root { min-height: 100vh; }
+  ::-webkit-scrollbar { display: none; }
+  @keyframes rise { from { transform: translateY(6px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="110" fill="#0F6E6E"/>
+  <text x="256" y="345" font-family="Tajawal, Arial, sans-serif" font-size="290" font-weight="800" fill="#ffffff" text-anchor="middle">ر</text>
+</svg>`;
+const iconBlob = new Blob([ICON_SVG], { type: "image/svg+xml" });
+const iconUrl = URL.createObjectURL(iconBlob);
+
+const appleIcon = document.createElement("link");
+appleIcon.rel = "apple-touch-icon";
+appleIcon.href = iconUrl;
+document.head.appendChild(appleIcon);
+const themeMeta = document.createElement("meta");
+themeMeta.name = "theme-color";
+themeMeta.content = "#0F6E6E";
+document.head.appendChild(themeMeta);
+const appleCapable = document.createElement("meta");
+appleCapable.name = "apple-mobile-web-app-capable";
+appleCapable.content = "yes";
+document.head.appendChild(appleCapable);
+const appleTitle = document.createElement("meta");
+appleTitle.name = "apple-mobile-web-app-title";
+appleTitle.content = "رِفيق";
+document.head.appendChild(appleTitle);
+
+const manifest = {
+  name: "رِفيق — رفيقك في رحلة الغسيل الكلوي",
+  short_name: "رِفيق",
+  start_url: location.href.split("#")[0],
+  scope: location.href.split("#")[0],
+  display: "standalone",
+  orientation: "portrait",
+  background_color: "#F6F3EC",
+  theme_color: "#0F6E6E",
+  dir: "rtl",
+  lang: "ar",
+  icons: [
+    { src: iconUrl, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" },
+    { src: iconUrl, sizes: "192x192", type: "image/svg+xml" },
+  ],
+};
+const manifestBlob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+const manifestLink = document.createElement("link");
+manifestLink.rel = "manifest";
+manifestLink.href = URL.createObjectURL(manifestBlob);
+document.head.appendChild(manifestLink);
+
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+  const SW_CODE = `
+    const CACHE = "rifiq-v1";
+    const ASSETS = [
+      self.registration.scope,
+      "https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap",
+      "https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js",
+    ];
+    self.addEventListener("install", (e) => {
+      self.skipWaiting();
+      e.waitUntil(caches.open(CACHE).then((c) => Promise.allSettled(ASSETS.map((a) => c.add(a)))));
+    });
+    self.addEventListener("activate", (e) => { self.clients.claim(); });
+    self.addEventListener("fetch", (e) => {
+      if (e.request.method !== "GET") return;
+      e.respondWith(
+        caches.match(e.request).then((cached) => {
+          const network = fetch(e.request).then((res) => {
+            if (res && res.status === 200) {
+              const copy = res.clone();
+              caches.open(CACHE).then((c) => c.put(e.request, copy));
+            }
+            return res;
+          }).catch(() => cached);
+          return cached || network;
+        })
+      );
+    });
+  `;
+  const swBlob = new Blob([SW_CODE], { type: "text/javascript" });
+  navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+}
+
+window.__rifiqInstallEvent = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  window.__rifiqInstallEvent = e;
+  window.dispatchEvent(new Event("rifiq-install-ready"));
+});
+</script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useCallback, useMemo } = React;
+
+const Icon = ({ path, size = 20, color = "currentColor", strokeWidth = 2, fill = "none" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">{path}</svg>
+);
+const IHome = (p) => <Icon {...p} path={<><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></>} />;
+const IDroplet = (p) => <Icon {...p} path={<path d="M12 2s7 8 7 13a7 7 0 1 1-14 0c0-5 7-13 7-13z"/>} />;
+const IScale = (p) => <Icon {...p} path={<><path d="M12 3v18"/><path d="M5 7h14"/><path d="M5 7l-3 6a3.5 3.5 0 0 0 7 0z"/><path d="M19 7l-3 6a3.5 3.5 0 0 0 7 0z"/></>} />;
+const IBook = (p) => <Icon {...p} path={<><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></>} />;
+const IPlus = (p) => <Icon {...p} path={<><path d="M12 5v14"/><path d="M5 12h14"/></>} />;
+const IX = (p) => <Icon {...p} path={<><path d="M18 6 6 18"/><path d="M6 6l12 12"/></>} />;
+const IChevDown = (p) => <Icon {...p} path={<path d="m6 9 6 6 6-6"/>} />;
+const IAlert = (p) => <Icon {...p} path={<><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></>} />;
+const ICheck = (p) => <Icon {...p} path={<><path d="M21.8 10A10 10 0 1 1 17 3.34"/><path d="m9 11 3 3L22 4"/></>} />;
+const IInfo = (p) => <Icon {...p} path={<><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></>} />;
+const IAward = (p) => <Icon {...p} path={<><circle cx="12" cy="8" r="6"/><path d="M15.48 13.6 17 22l-5-3-5 3 1.52-8.4"/></>} />;
+const IArrowLeft = (p) => <Icon {...p} path={<><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></>} />;
+const IRotate = (p) => <Icon {...p} path={<><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></>} />;
+
+const INK = "#0E2B2B", DEEP = "#0F6E6E", DEEP_D = "#0B5757", SAND = "#F6F3EC";
+const CARD = "#FFFFFF", LINE = "#E4DFD3", AMBER = "#C97A2B", CORAL = "#C4453B", SAGE = "#5C8A6E";
+
+const todayKey = () => new Date().toISOString().slice(0, 10);
+const fmtTime = (iso) => new Date(iso).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+const fmtDate = (key) => new Date(key + "T00:00:00").toLocaleDateString("ar-EG", { day: "numeric", month: "short" });
+
+const store = {
+  get: async (k) => { try { const v = localStorage.getItem(k); return v ? { value: v } : null; } catch (e) { return null; } },
+  set: async (k, v) => { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } },
+};
+
+const QUICK_ITEMS = [
+  { label: "كوب ماء", ml: 200, icon: "💧" }, { label: "كوب شاي", ml: 150, icon: "🍵" },
+  { label: "كوب لبن", ml: 200, icon: "🥛" }, { label: "عصير", ml: 200, icon: "🧃" },
+  { label: "شوربة", ml: 200, icon: "🍲" }, { label: "دوا (مياه)", ml: 50, icon: "💊" },
+];
+
+const NUTRIENTS = [
+  { key: "fluid", title: "السوائل", icon: "💧", color: DEEP,
+    why: "الكلى المريضة مبتقدرش تتخلص من السوائل الزيادة، فبتتجمع وبتزوّد الوزن بين الجلسات وبتضغط على القلب والرئة.",
+    tips: ["احسب كل حاجة سايلة بتاخدها: مية، شاي، شوربة، حتى التلج والفاكهة اللي فيها مية كتير.",
+      "لو حاسس بالعطش، امص قطعة ليمون أو اتمضمض بمية بارد بدل ما تشرب.",
+      "وزّع الكمية المسموحة على اليوم كله بدل ما تشربها مرة واحدة.",
+      "الزيادة في الوزن بين الجلسات ميزيدش عن 2-3 كيلو عشان القلب يفضل مرتاح."] },
+  { key: "sodium", title: "الصوديوم (الملح)", icon: "🧂", color: AMBER,
+    why: "الملح بيخلّيك عطشان أكتر فتشرب سوايل أكتر، وبيزوّد ضغط الدم وتجمع المية في الجسم.",
+    tips: ["قلل الملح على السفرة، وجرب بهارات وأعشاب بدل منه (كمون، كزبرة، ثوم، ليمون).",
+      "ابعد عن المخللات والجبن الأبيض المالح والمكسرات المملحة والشيبسي.",
+      "الأكل الجاهز والمعلّب فيه صوديوم مخفي كتير حتى لو مش طعمه مالح.",
+      "اقرا بطاقة المكونات لو الأكل معبأ — دور على كلمة صوديوم أو ملح."] },
+  { key: "potassium", title: "البوتاسيوم", icon: "🍌", color: SAGE,
+    why: "لما البوتاسيوم يزيد في الدم بين الجلسات، ممكن يأثر على نبضات القلب بشكل خطير.",
+    tips: ["قلل الموز والبطاطس والطماطم والبرتقال والمشمش المجفف.",
+      "تقنية النقع: قطّع الخضار (بطاطس، خضار ورقي) واغليها في مية كتير وارمي المية — بتقلل البوتاسيوم.",
+      "الفواكه الأقل بوتاسيوم: تفاح، عنب، أناناس، توت.",
+      "استشر طبيبك قبل ماخد أي بديل ملح لأنه غالبًا فيه بوتاسيوم عالي."] },
+  { key: "phosphorus", title: "الفوسفور", icon: "🦴", color: "#8B6BAE",
+    why: "زيادة الفوسفور بتسحب الكالسيوم من العضم وبتضعفه، وبتأثر على الشرايين على المدى البعيد.",
+    tips: ["الألبان والجبن والمكسرات والمشروبات الغازية الكولا فيها فوسفور عالي.",
+      "لو الدكتور وصفلك حبوب ربط الفوسفات، خدها مع الأكل في نفس اللحظة مش قبله أو بعده بوقت طويل.",
+      "اللحوم المصنّعة والوجبات الجاهزة فيها فوسفور مضاف مخفي.",
+      "متفوتش أي جرعة من حبوب ربط الفوسفات حتى لو نسيت أكلت."] },
+  { key: "protein", title: "البروتين", icon: "🍗", color: "#B5654A",
+    why: "الغسيل الكلوي بياخد معاه بروتين، فمحتاج بروتين أكتر من الشخص العادي عشان تعوّض وتحافظ على قوة عضلاتك.",
+    tips: ["اللحوم والدجاج والسمك والبيض مصادر بروتين ممتازة لمريض الغسيل.",
+      "وزّع البروتين على وجبات اليوم بدل ما تاخده كله في وجبة واحدة.",
+      "لو حاسس بضعف عام أو نزول وزن، كلّم الدكتور أو أخصائي التغذية بسرعة."] },
+];
+
+const QUIZ = [
+  { q: "الزيادة الآمنة في الوزن بين جلستين إيه؟", options: ["أقل من 2-3 كيلو", "مش مهم", "أكتر من 5 كيلو"], correct: 0,
+    exp: "الزيادة اللي أكتر من 2-3 كيلو بتحمّل القلب والرئة ضغط زيادة." },
+  { q: "أنهي طريقة تقلل البوتاسيوم في الخضار؟", options: ["تقلّيها في زيت", "تنقعها وتسلقها في مية كتير وترمي المية", "تاكلها نيّة"], correct: 1,
+    exp: "تقنية النقع والسلق بتسحب جزء كبير من البوتاسيوم من الخضار." },
+  { q: "حبوب ربط الفوسفات تتاخد إمتى؟", options: ["قبل الأكل بساعة", "مع الأكل في نفس اللحظة", "بعد الأكل بساعتين"], correct: 1,
+    exp: "لازم تتاخد مع أول لقمة عشان ترتبط بالفوسفور جوه الأكل نفسه." },
+  { q: "أنهي دي فيها صوديوم عالي غالبًا؟", options: ["الفاكهة الطازة", "المخللات والأكل المعلّب", "الخضار المسلوق من غير ملح"], correct: 1,
+    exp: "المخللات والمعلبات والوجبات الجاهزة فيها صوديوم مخفي عالي." },
+  { q: "مريض الغسيل محتاج بروتين إيه بالنسبة للشخص العادي؟", options: ["أقل بكتير", "نفسه بالظبط", "أكتر شوية عشان يعوّض الفاقد في الجلسة"], correct: 2,
+    exp: "الغسيل الكلوي بياخد معاه بروتين، فالاحتياج بيزيد مش بيقل." },
+];
+
+const DIALYSIS_INFO = [
+  { key: "what", title: "إيه هو الغسيل الكلوي وليه محتاجه", icon: "🩺", color: DEEP,
+    why: "الكلى بتنضّف الدم من السموم والمياه الزيادة كل يوم. لما تفشل، الغسيل بيعمل شغلها اصطناعيًا عن طريق جهاز بينقّي الدم برّة الجسم.",
+    tips: ["الغسيل مش عقاب — هو علاج بيحافظ على حياتك ويشيل السموم اللي جسمك مش قادر يشيلها لوحده.",
+      "في نوعين: الغسيل الدموي (في المستشفى غالبًا 3 مرات أسبوعيًا) والغسيل البريتوني (في البيت، يوميًا).",
+      "الجلسة بتاخد حوالي 3-4 ساعات وبتنقّي الدم على مراحل كتير."] },
+  { key: "risks", title: "مضاعفات الغسيل المحتملة", icon: "⚠️", color: AMBER,
+    why: "زي أي علاج، الغسيل ممكن يكون له آثار جانبية — ومعرفتها بتساعدك تتعامل معاها بسرعة بدل ما تتفاجئ.",
+    tips: ["هبوط الضغط أثناء الجلسة (دوخة، غثيان) — عادي يحصل، قول للممرضة فورًا.",
+      "تقلصات عضلية في رجليك خلال الجلسة.",
+      "حكة في الجلد بسبب تراكم الفوسفور.",
+      "عدوى أو تجلط في مكان الوصلة الشريانية الوريدية — لازم تراقبها وتحافظ على نظافتها."] },
+  { key: "missed", title: "لو فوّت أو قاطعت جلسة الغسيل", icon: "🚨", color: CORAL,
+    why: "تفويت الجلسات مش زي تفويت موعد عادي — بيتراكم السموم والسوائل بسرعة وممكن يهدد حياتك.",
+    tips: ["البوتاسيوم العالي ممكن يسبب اضطراب خطير في نبضات القلب خلال ساعات قليلة.",
+      "السوائل المتراكمة بتضغط على القلب والرئة وممكن تسبب ضيق نفس حاد.",
+      "كل جلسة تفوتها بتزوّد فرصة الدخول للمستشفى بالطوارئ.",
+      "لو محتاج تأجيل جلسة لأي سبب، كلّم وحدة الغسيل فورًا بدل ما تسيبها من غير خبر."] },
+  { key: "causes", title: "إيه اللي بيودّي للفشل الكلوي والغسيل", icon: "🔍", color: "#8B6BAE",
+    why: "الفشل الكلوي غالبًا نتيجة تراكمية لأمراض مزمنة اتسابت من غير سيطرة كويسة لسنين طويلة.",
+    tips: ["السكر غير المنضبط هو السبب الأول عالميًا ومصريًا لتلف الكلى تدريجيًا.",
+      "الضغط العالي المهمل بيضر الأوعية الدموية جوه الكلى بمرور الوقت.",
+      "الاستخدام المتكرر لمسكنات معينة (زي مضادات الالتهاب) من غير استشارة طبيب.",
+      "التهابات الكلى المتكررة أو اللي مش بتتعالج كويس، وكمان التاريخ العائلي لأمراض الكلى."] },
+  { key: "prevent", title: "إزاي نتجنب الوصول للفشل الكلوي", icon: "🛡️", color: SAGE,
+    why: "حتى لو عندك عوامل خطورة، الوعي المبكر والالتزام بيقدر يأخر أو يمنع الوصول للغسيل خالص.",
+    tips: ["تابع السكر والضغط بانتظام والتزم بالعلاج الموصوف حتى لو حاسس إنك كويس.",
+      "اعمل تحليل وظائف كلى دوري لو عندك سكر أو ضغط أو تاريخ عائلي لأمراض الكلى.",
+      "ماخدش مسكنات أو أدوية من غير استشارة طبيب، خصوصًا لو عندك مرض مزمن.",
+      "بلّغ دكتورك فورًا لو لاحظت تورّم في رجليك، بول رغوي، أو تعب مستمر غير مبرر."] },
+];
+
+function App() {
+  const [tab, setTab] = useState("home");
+  const [loaded, setLoaded] = useState(false);
+  const [limit, setLimit] = useState(1000);
+  const [fluidLogs, setFluidLogs] = useState([]);
+  const [weightLogs, setWeightLogs] = useState([]);
+  const [showLimitEdit, setShowLimitEdit] = useState(false);
+  const [showAddFluid, setShowAddFluid] = useState(false);
+  const [showAddWeight, setShowAddWeight] = useState(false);
+  const [openCard, setOpenCard] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [dailyChecks, setDailyChecks] = useState({});
+  const [remindersOn, setRemindersOn] = useState(false);
+  const [notifPermission, setNotifPermission] = useState(typeof Notification !== "undefined" ? Notification.permission : "unsupported");
+  const [canInstall, setCanInstall] = useState(false);
+  const [installed, setInstalled] = useState(window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isAndroid = /Android/.test(navigator.userAgent);
+  const [showIOSHelp, setShowIOSHelp] = useState(false);
+  const [showAndroidHelp, setShowAndroidHelp] = useState(false);
+
+  useEffect(() => {
+    if (window.__rifiqInstallEvent) setCanInstall(true);
+    const onReady = () => setCanInstall(true);
+    window.addEventListener("rifiq-install-ready", onReady);
+    window.addEventListener("appinstalled", () => { setInstalled(true); setCanInstall(false); });
+    return () => window.removeEventListener("rifiq-install-ready", onReady);
+  }, []);
+
+  const promptInstall = async () => {
+    const evt = window.__rifiqInstallEvent;
+    if (!evt) { showToast("افتح قائمة المتصفح واختار \"إضافة إلى الشاشة الرئيسية\""); return; }
+    evt.prompt();
+    const choice = await evt.userChoice;
+    if (choice.outcome === "accepted") { setInstalled(true); setCanInstall(false); }
+    window.__rifiqInstallEvent = null;
+  };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await store.get("rf-data");
+        if (r && r.value) {
+          const d = JSON.parse(r.value);
+          setLimit(d.limit ?? 1000); setFluidLogs(d.fluidLogs ?? []);
+          setWeightLogs(d.weightLogs ?? []); setDailyChecks(d.dailyChecks ?? {});
+          setRemindersOn(d.remindersOn ?? false);
+        } else setNeedsOnboarding(true);
+      } catch (e) { setNeedsOnboarding(true); }
+      setLoaded(true);
+    })();
+  }, []);
+
+  const persist = useCallback(async (next) => { try { await store.set("rf-data", JSON.stringify(next)); } catch (e) {} }, []);
+
+  useEffect(() => {
+    if (!loaded || needsOnboarding) return;
+    persist({ limit, fluidLogs, weightLogs, dailyChecks, remindersOn });
+  }, [limit, fluidLogs, weightLogs, dailyChecks, remindersOn, loaded, needsOnboarding, persist]);
+
+  useEffect(() => {
+    if (!remindersOn || typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    const REMIND_EVERY_MS = 3 * 60 * 60 * 1000;
+    const fireFluidReminder = () => {
+      const hour = new Date().getHours();
+      if (hour < 8 || hour > 22) return;
+      try {
+        new Notification("رِفيق 💧", { body: "متنساش تسجّل أي سوائل شربتها من آخر مرة فتحت التطبيق", tag: "rifiq-fluid-reminder" });
+      } catch (e) {}
+    };
+    const fluidId = setInterval(fireFluidReminder, REMIND_EVERY_MS);
+
+    const ALL_TIPS = [...NUTRIENTS, ...DIALYSIS_INFO];
+    const checkDailyTip = async () => {
+      const today = todayKey();
+      let last = null;
+      try { const r = await store.get("rf-last-tip-date"); last = r && r.value; } catch (e) {}
+      if (last === today) return;
+      const hour = new Date().getHours();
+      if (hour < 9) return;
+      const pick = ALL_TIPS[new Date().getDate() % ALL_TIPS.length];
+      try {
+        new Notification(`رِفيق · ${pick.title} ${pick.icon}`, { body: pick.tips[0], tag: "rifiq-daily-tip" });
+        await store.set("rf-last-tip-date", today);
+      } catch (e) {}
+    };
+    checkDailyTip();
+    const tipId = setInterval(checkDailyTip, 30 * 60 * 1000);
+
+    return () => { clearInterval(fluidId); clearInterval(tipId); };
+  }, [remindersOn]);
+
+  const enableReminders = async () => {
+    if (typeof Notification === "undefined") { showToast("المتصفح ده مش بيدعم الإشعارات"); return; }
+    if (Notification.permission === "granted") { setRemindersOn(true); return; }
+    const perm = await Notification.requestPermission();
+    setNotifPermission(perm);
+    if (perm === "granted") { setRemindersOn(true); showToast("التذكير اتفعّل ✓"); }
+    else showToast("محتاجين إذن الإشعارات عشان نفكّرك");
+  };
+  const disableReminders = () => setRemindersOn(false);
+
+  useEffect(() => {
+    if (!loaded || needsOnboarding) return;
+    const y = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    if (dailyChecks[y] !== undefined) return;
+    const yTotal = fluidLogs.filter((l) => l.at.slice(0, 10) === y).reduce((s, l) => s + l.ml, 0);
+    if (yTotal === 0) return;
+    setDailyChecks((prev) => ({ ...prev, [y]: yTotal <= limit }));
+  }, [loaded, needsOnboarding]);
+
+  const streak = useMemo(() => {
+    let s = 0, d = new Date(Date.now() - 86400000);
+    while (true) {
+      const key = d.toISOString().slice(0, 10);
+      if (dailyChecks[key] === true) { s++; d = new Date(d.getTime() - 86400000); } else break;
+    }
+    return s;
+  }, [dailyChecks]);
+
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 1800); };
+
+  const todayLogs = useMemo(() => fluidLogs.filter((l) => l.at.slice(0, 10) === todayKey()).sort((a, b) => (a.at < b.at ? 1 : -1)), [fluidLogs]);
+  const todayTotal = useMemo(() => todayLogs.reduce((s, l) => s + l.ml, 0), [todayLogs]);
+  const pct = Math.min(100, Math.round((todayTotal / Math.max(1, limit)) * 100));
+  const remaining = limit - todayTotal;
+  const glassColor = pct >= 100 ? CORAL : pct >= 80 ? AMBER : DEEP;
+
+  const lastIDWG = useMemo(() => {
+    if (weightLogs.length === 0) return null;
+    const last = [...weightLogs].sort((a, b) => (a.date < b.date ? 1 : -1))[0];
+    if (last.post == null || last.pre == null) return null;
+    return +(last.post - last.pre).toFixed(1);
+  }, [weightLogs]);
+
+  const addFluid = (ml) => {
+    setFluidLogs([{ id: Date.now(), ml, at: new Date().toISOString() }, ...fluidLogs]);
+    setShowAddFluid(false); showToast(`اتسجل ${ml} مل`);
+  };
+  const removeFluid = (id) => setFluidLogs(fluidLogs.filter((l) => l.id !== id));
+  const addWeight = (pre, post) => {
+    setWeightLogs([{ id: Date.now(), date: todayKey(), pre, post }, ...weightLogs]);
+    setShowAddWeight(false); showToast("اتسجل الوزن");
+  };
+  const removeWeight = (id) => setWeightLogs(weightLogs.filter((l) => l.id !== id));
+
+  if (!loaded) return <div style={{ minHeight: "100vh", background: SAND, display: "flex", alignItems: "center", justifyContent: "center", color: DEEP }}>بيتحمّل…</div>;
+  if (needsOnboarding) return <Onboarding onDone={(v) => { setLimit(v); setNeedsOnboarding(false); persist({ limit: v, fluidLogs, weightLogs, dailyChecks }); }} />;
+
+  return (
+    <div dir="rtl" style={styles.app}>
+      <header style={styles.header}>
+        <div style={styles.brandRow}><span style={styles.brandMark}>ر</span><span style={styles.brandName}>رِفيق</span></div>
+        <div style={styles.brandSub}>رفيقك في رحلة الغسيل الكلوي</div>
+      </header>
+
+      <main style={styles.main}>
+        {tab === "home" && <HomeTab pct={pct} glassColor={glassColor} todayTotal={todayTotal} limit={limit} remaining={remaining} lastIDWG={lastIDWG} streak={streak} onEditLimit={() => setShowLimitEdit(true)} onAddFluid={() => setShowAddFluid(true)} onGoLearn={() => setTab("learn")} remindersOn={remindersOn} onEnableReminders={enableReminders} onDisableReminders={disableReminders} canInstall={canInstall} installed={installed} onInstall={promptInstall} isIOS={isIOS} isAndroid={isAndroid} onShowIOSHelp={() => setShowIOSHelp(true)} onShowAndroidHelp={() => setShowAndroidHelp(true)} />}
+        {tab === "fluid" && <FluidTab pct={pct} glassColor={glassColor} todayTotal={todayTotal} limit={limit} remaining={remaining} todayLogs={todayLogs} onAdd={() => setShowAddFluid(true)} onRemove={removeFluid} />}
+        {tab === "weight" && <WeightTab weightLogs={weightLogs} onAdd={() => setShowAddWeight(true)} onRemove={removeWeight} />}
+        {tab === "learn" && <LearnTab openCard={openCard} setOpenCard={setOpenCard} onStartQuiz={() => setTab("quiz")} />}
+        {tab === "quiz" && <QuizTab onExit={() => setTab("learn")} />}
+      </main>
+
+      <nav style={styles.nav}>
+        <NavBtn active={tab === "home"} onClick={() => setTab("home")} icon={<IHome size={22} />} label="الرئيسية" />
+        <NavBtn active={tab === "fluid"} onClick={() => setTab("fluid")} icon={<IDroplet size={22} />} label="السوائل" />
+        <NavBtn active={tab === "weight"} onClick={() => setTab("weight")} icon={<IScale size={22} />} label="الوزن" />
+        <NavBtn active={tab === "learn"} onClick={() => setTab("learn")} icon={<IBook size={22} />} label="تثقيف" />
+      </nav>
+
+      {showAddFluid && <AddFluidSheet onClose={() => setShowAddFluid(false)} onAdd={addFluid} />}
+      {showAddWeight && <AddWeightSheet onClose={() => setShowAddWeight(false)} onAdd={addWeight} />}
+      {showLimitEdit && <EditLimitSheet limit={limit} onClose={() => setShowLimitEdit(false)} onSave={(v) => { setLimit(v); setShowLimitEdit(false); }} />}
+      {showIOSHelp && <IOSInstallSheet onClose={() => setShowIOSHelp(false)} />}
+      {showAndroidHelp && <AndroidInstallSheet onClose={() => setShowAndroidHelp(false)} />}
+      {toast && <div style={styles.toast}>{toast}</div>}
+    </div>
+  );
+}
+
+function AndroidInstallSheet({ onClose }) {
+  return (
+    <Sheet title="ثبّت رِفيق على شاشتك" onClose={onClose}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <Step n="1" text="دوس على أيقونة القائمة في متصفحك (عادةً ٣ نقط ⋮ فوق)" />
+        <Step n="2" text="دوس على «إضافة إلى الشاشة الرئيسية» أو «تثبيت التطبيق» — الاسم بيختلف شوية حسب المتصفح" />
+        <Step n="3" text="دوس «تثبيت» أو «إضافة» في الرسالة اللي هتظهر" />
+        <div style={{ background: SAND, borderRadius: 12, padding: 12, fontSize: 13, color: "#666", lineHeight: 1.7, display: "flex", gap: 8 }}>
+          <IInfo size={16} color={DEEP} />
+          الخاصية دي متاحة في كل متصفحات الموبايل الحديثة (كروم، سامسونج إنترنت، إيدج، فايرفوكس، أوبرا). لو الخيار مش ظاهر، جرّب افتح الرابط في تبويب المتصفح العادي (مش لو كنت جاي من واتساب أو فيسبوك مباشرة).
+        </div>
+      </div>
+    </Sheet>
+  );
+}
+
+function IOSInstallSheet({ onClose }) {
+  return (
+    <Sheet title="ثبّت رِفيق على شاشتك" onClose={onClose}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <Step n="1" text="دوس على زرار المشاركة تحت في المتصفح (مربّع وسهم لفوق)" />
+        <Step n="2" text="مرّر لتحت ودوس على «إضافة إلى الشاشة الرئيسية»" />
+        <Step n="3" text="دوس «إضافة» فوق على اليمين" />
+        <div style={{ background: SAND, borderRadius: 12, padding: 12, fontSize: 13, color: "#666", lineHeight: 1.7, display: "flex", gap: 8 }}>
+          <IInfo size={16} color={DEEP} />
+          بعد كده هتلاقي أيقونة "رِفيق" على شاشتك زي أي تطبيق، وتقدر تفتحه حتى من غير نت. الخاصية دي بتشتغل في متصفح آيفون العادي فقط (مش لو كنت جاي من واتساب أو فيسبوك مباشرة).
+        </div>
+      </div>
+    </Sheet>
+  );
+}
+function Step({ n, text }) {
+  return (
+    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+      <div style={{ width: 28, height: 28, borderRadius: 8, background: DEEP, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 13, flexShrink: 0 }}>{n}</div>
+      <div style={{ fontSize: 14, color: "#333" }}>{text}</div>
+    </div>
+  );
+}
+
+function HomeTab({ pct, glassColor, todayTotal, limit, remaining, lastIDWG, streak, onEditLimit, onAddFluid, onGoLearn, remindersOn, onEnableReminders, onDisableReminders, canInstall, installed, onInstall, isIOS, isAndroid, onShowIOSHelp, onShowAndroidHelp }) {
+  const tip = NUTRIENTS[new Date().getDate() % NUTRIENTS.length];
+  const handleInstallClick = () => {
+    if (canInstall) { onInstall(); return; }
+    if (isIOS) { onShowIOSHelp(); return; }
+    onShowAndroidHelp();
+  };
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "rise .35s ease" }}>
+      {!installed && (
+        <button onClick={handleInstallClick} style={{ ...styles.card, display: "flex", alignItems: "center", gap: 12, cursor: "pointer", width: "100%", textAlign: "right", background: `linear-gradient(90deg, ${DEEP}, ${DEEP_D})`, border: "none" }}>
+          <div style={{ width: 42, height: 42, borderRadius: 12, background: "rgba(255,255,255,.18)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>⬇️</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ color: "#fff", fontWeight: 800, fontSize: 15 }}>ثبّت رِفيق على شاشتك</div>
+            <div style={{ color: "rgba(255,255,255,.8)", fontSize: 12 }}>يفتح زي أي تطبيق، ويشتغل من غير نت بعد كده</div>
+          </div>
+        </button>
+      )}
+      {streak > 0 && (
+        <div style={{ ...styles.card, display: "flex", alignItems: "center", gap: 12, background: `linear-gradient(90deg, ${DEEP}, ${DEEP_D})`, border: "none" }}>
+          <div style={{ width: 42, height: 42, borderRadius: 12, background: "rgba(255,255,255,.18)", display: "flex", alignItems: "center", justifyContent: "center" }}><IAward size={22} color="#fff" /></div>
+          <div><div style={{ color: "#fff", fontWeight: 800, fontSize: 15 }}>{streak} يوم التزام متواصل 🎉</div><div style={{ color: "rgba(255,255,255,.8)", fontSize: 12 }}>كمّل كده، بتحافظ على قلبك وكليتك</div></div>
+        </div>
+      )}
+      {!remindersOn ? (
+        <button onClick={onEnableReminders} style={{ ...styles.card, display: "flex", alignItems: "center", gap: 12, cursor: "pointer", width: "100%", textAlign: "right", border: `1.5px dashed ${LINE}` }}>
+          <div style={{ width: 38, height: 38, borderRadius: 10, background: SAND, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🔔</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 14 }}>فعّل التذكير</div>
+            <div style={{ fontSize: 12, color: "#8a8a8a" }}>تذكير بتسجيل السوائل + معلومة يومية</div>
+          </div>
+        </button>
+      ) : (
+        <div style={{ ...styles.card, display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 10, background: SAND, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🔔</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 14, color: SAGE }}>التذكير مفعّل ✓</div>
+            <div style={{ fontSize: 11.5, color: "#8a8a8a" }}>لازم تسيب التطبيق فاتح في الخلفية عشان يوصلك</div>
+          </div>
+          <button onClick={onDisableReminders} style={styles.linkBtn}>إيقاف</button>
+        </div>
+      )}
+      <section style={styles.card}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <span style={styles.cardTitle}>سوائل النهاردة</span>
+          <button onClick={onEditLimit} style={styles.linkBtn}>الحد اليومي: {limit} مل</button>
+        </div>
+        <FluidGlass pct={pct} color={glassColor} total={todayTotal} limit={limit} big />
+        <div style={{ textAlign: "center", marginTop: 10, color: remaining < 0 ? CORAL : INK, fontWeight: 700 }}>
+          {remaining >= 0 ? `متبقّي ${remaining} مل` : `تجاوزت بـ ${Math.abs(remaining)} مل`}
+        </div>
+        <button onClick={onAddFluid} style={styles.primaryBtn}><IPlus size={18} /> سجّل سوائل</button>
+      </section>
+      <section style={{ display: "flex", gap: 12 }}>
+        <div style={{ ...styles.card, flex: 1, padding: 14 }}>
+          <div style={styles.miniLabel}>آخر زيادة وزن</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: lastIDWG == null ? "#9a9a9a" : lastIDWG > 3 ? CORAL : SAGE }}>{lastIDWG == null ? "—" : `${lastIDWG} كجم`}</div>
+          <div style={{ fontSize: 12, color: "#8a8a8a" }}>بين الجلستين</div>
+        </div>
+        <div style={{ ...styles.card, flex: 1, padding: 14 }}>
+          <div style={styles.miniLabel}>كباية شربتها</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: DEEP }}>{Math.round(todayTotal / 200)}</div>
+          <div style={{ fontSize: 12, color: "#8a8a8a" }}>≈ 200 مل للكباية</div>
+        </div>
+      </section>
+      <section onClick={onGoLearn} style={{ ...styles.card, cursor: "pointer", display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <div style={{ fontSize: 26 }}>{tip.icon}</div>
+        <div><div style={{ fontWeight: 800, color: tip.color, marginBottom: 4 }}>نصيحة النهاردة · {tip.title}</div><div style={{ fontSize: 14, color: "#555", lineHeight: 1.7 }}>{tip.tips[0]}</div></div>
+      </section>
+    </div>
+  );
+}
+
+function FluidTab({ pct, glassColor, todayTotal, limit, remaining, todayLogs, onAdd, onRemove }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "rise .35s ease" }}>
+      <section style={styles.card}>
+        <FluidGlass pct={pct} color={glassColor} total={todayTotal} limit={limit} big />
+        <div style={{ textAlign: "center", marginTop: 10, fontWeight: 700, color: remaining < 0 ? CORAL : INK }}>
+          {remaining >= 0 ? `متبقّي ${remaining} مل من ${limit} مل` : `تجاوزت الحد بـ ${Math.abs(remaining)} مل`}
+        </div>
+        <button onClick={onAdd} style={styles.primaryBtn}><IPlus size={18} /> سجّل سوائل</button>
+      </section>
+      <section>
+        <div style={styles.sectionTitle}>سجل النهاردة</div>
+        {todayLogs.length === 0 ? <div style={styles.empty}>لسه ما سجّلتش حاجة النهاردة — ابدأ بأول كباية 💧</div> : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {todayLogs.map((l) => (
+              <div key={l.id} style={styles.logRow}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}><div style={styles.logDot} /><span style={{ fontWeight: 700 }}>{l.ml} مل</span><span style={{ color: "#999", fontSize: 13 }}>{fmtTime(l.at)}</span></div>
+                <button onClick={() => onRemove(l.id)} style={styles.iconBtn}><IX size={16} /></button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function FluidGlass({ pct, color, total, limit, big }) {
+  const h = big ? 150 : 100, w = big ? 100 : 70, fillH = (pct / 100) * (h - 10);
+  return (
+    <div style={{ display: "flex", justifyContent: "center" }}>
+      <svg width={w + 20} height={h + 20} viewBox={`0 0 ${w + 20} ${h + 20}`}>
+        <path d={`M10,10 L${w + 10},10 L${w},${h + 10} L20,${h + 10} Z`} fill="#fff" stroke={LINE} strokeWidth="2" />
+        <clipPath id="glassClip"><path d={`M12,12 L${w + 8},12 L${w - 2},${h + 8} L22,${h + 8} Z`} /></clipPath>
+        <g clipPath="url(#glassClip)">
+          <rect x="10" y={h + 10 - fillH} width={w + 10} height={fillH + 10} fill={color} opacity="0.85" />
+          <rect x="10" y={h + 10 - fillH} width={w + 10} height="6" fill={color} />
+        </g>
+        <path d={`M10,10 L${w + 10},10 L${w},${h + 10} L20,${h + 10} Z`} fill="none" stroke={LINE} strokeWidth="2" />
+      </svg>
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", marginRight: 14 }}>
+        <div style={{ fontSize: big ? 30 : 22, fontWeight: 800, color: INK }}>{pct}٪</div>
+        <div style={{ fontSize: 13, color: "#8a8a8a" }}>{total} / {limit} مل</div>
+      </div>
+    </div>
+  );
+}
+
+function WeightTab({ weightLogs, onAdd, onRemove }) {
+  const sorted = useMemo(() => [...weightLogs].sort((a, b) => (a.date < b.date ? 1 : -1)), [weightLogs]);
+  const max = useMemo(() => Math.max(1, ...weightLogs.map((w) => (w.post - w.pre) || 0)), [weightLogs]);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "rise .35s ease" }}>
+      <section style={styles.card}>
+        <div style={styles.cardTitle}>الزيادة بين الجلستين</div>
+        <div style={{ fontSize: 12, color: "#8a8a8a", marginBottom: 10 }}>الهدف: أقل من 2–3 كيلو بين كل جلسة والتانية</div>
+        {sorted.length === 0 ? <div style={styles.empty}>سجّل وزنك قبل وبعد الجلسة عشان تتابع</div> : (
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-end", height: 90, padding: "0 4px" }}>
+            {sorted.slice(0, 8).reverse().map((w) => {
+              const gain = +(w.post - w.pre).toFixed(1), h = Math.max(6, (Math.abs(gain) / max) * 80);
+              const c = gain > 3 ? CORAL : gain > 2 ? AMBER : SAGE;
+              return (
+                <div key={w.id} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                  <div style={{ fontSize: 10, color: "#999" }}>{gain}</div>
+                  <div style={{ width: "100%", height: h, background: c, borderRadius: 6 }} />
+                  <div style={{ fontSize: 9, color: "#aaa" }}>{fmtDate(w.date)}</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <button onClick={onAdd} style={styles.primaryBtn}><IPlus size={18} /> سجّل وزن جلسة</button>
+      </section>
+      <section>
+        <div style={styles.sectionTitle}>السجل</div>
+        {sorted.length === 0 ? <div style={styles.empty}>مفيش تسجيلات لسه</div> : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {sorted.map((w) => {
+              const gain = +(w.post - w.pre).toFixed(1);
+              return (
+                <div key={w.id} style={styles.logRow}>
+                  <div><div style={{ fontWeight: 700 }}>{fmtDate(w.date)} · زيادة {gain} كجم</div><div style={{ fontSize: 12, color: "#999" }}>قبل {w.pre} كجم ← بعد {w.post} كجم</div></div>
+                  <button onClick={() => onRemove(w.id)} style={styles.iconBtn}><IX size={16} /></button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function LearnTab({ openCard, setOpenCard, onStartQuiz }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, animation: "rise .35s ease" }}>
+      <div style={{ color: "#8a8a8a", fontSize: 14, marginBottom: 2 }}>كل حاجة محتاج تعرفها عن أكلك وشربك على الغسيل الكلوي</div>
+      <button onClick={onStartQuiz} style={{ ...styles.card, border: `1.5px dashed ${DEEP}`, display: "flex", alignItems: "center", gap: 12, cursor: "pointer", width: "100%", textAlign: "right" }}>
+        <div style={{ width: 42, height: 42, borderRadius: 12, background: SAND, display: "flex", alignItems: "center", justifyContent: "center" }}><IAward size={20} color={DEEP} /></div>
+        <div style={{ flex: 1 }}><div style={{ fontWeight: 800, color: DEEP, fontSize: 15 }}>اختبر معلوماتك</div><div style={{ fontSize: 12.5, color: "#8a8a8a" }}>5 أسئلة سريعة تتأكد بيها إنك فاهم صح</div></div>
+        <IArrowLeft size={18} color={DEEP} />
+      </button>
+
+      <div style={styles.sectionTitle}>التغذية والأكل</div>
+      {NUTRIENTS.map((n) => {
+        const open = openCard === n.key;
+        return (
+          <div key={n.key} style={{ ...styles.card, padding: 0, overflow: "hidden" }}>
+            <button onClick={() => setOpenCard(open ? null : n.key)} style={{ width: "100%", background: "none", border: "none", padding: 16, display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "right" }}>
+              <div style={{ fontSize: 24 }}>{n.icon}</div>
+              <div style={{ flex: 1, fontWeight: 800, color: INK, fontSize: 16 }}>{n.title}</div>
+              <span style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .2s", display: "flex" }}><IChevDown size={18} color={n.color} /></span>
+            </button>
+            {open && (
+              <div style={{ padding: "0 16px 18px", animation: "rise .25s ease" }}>
+                <div style={{ display: "flex", gap: 8, background: SAND, borderRadius: 10, padding: 12, marginBottom: 10 }}>
+                  <IInfo size={16} color={n.color} />
+                  <div style={{ fontSize: 13.5, lineHeight: 1.8, color: "#444" }}>{n.why}</div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {n.tips.map((t, i) => <div key={i} style={{ display: "flex", gap: 8, fontSize: 14, lineHeight: 1.7, color: "#333" }}><ICheck size={16} color={n.color} /><span>{t}</span></div>)}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      <div style={{ ...styles.sectionTitle, marginTop: 8 }}>عن الغسيل الكلوي</div>
+      {DIALYSIS_INFO.map((n) => {
+        const open = openCard === n.key;
+        return (
+          <div key={n.key} style={{ ...styles.card, padding: 0, overflow: "hidden" }}>
+            <button onClick={() => setOpenCard(open ? null : n.key)} style={{ width: "100%", background: "none", border: "none", padding: 16, display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "right" }}>
+              <div style={{ fontSize: 24 }}>{n.icon}</div>
+              <div style={{ flex: 1, fontWeight: 800, color: INK, fontSize: 16 }}>{n.title}</div>
+              <span style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .2s", display: "flex" }}><IChevDown size={18} color={n.color} /></span>
+            </button>
+            {open && (
+              <div style={{ padding: "0 16px 18px", animation: "rise .25s ease" }}>
+                <div style={{ display: "flex", gap: 8, background: SAND, borderRadius: 10, padding: 12, marginBottom: 10 }}>
+                  <IInfo size={16} color={n.color} />
+                  <div style={{ fontSize: 13.5, lineHeight: 1.8, color: "#444" }}>{n.why}</div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {n.tips.map((t, i) => <div key={i} style={{ display: "flex", gap: 8, fontSize: 14, lineHeight: 1.7, color: "#333" }}><ICheck size={16} color={n.color} /><span>{t}</span></div>)}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function QuizTab({ onExit }) {
+  const [i, setI] = useState(0), [picked, setPicked] = useState(null), [score, setScore] = useState(0), [done, setDone] = useState(false);
+  const q = QUIZ[i];
+  const choose = (idx) => { if (picked !== null) return; setPicked(idx); if (idx === q.correct) setScore((s) => s + 1); };
+  const next = () => { if (i + 1 >= QUIZ.length) { setDone(true); return; } setI(i + 1); setPicked(null); };
+  const restart = () => { setI(0); setPicked(null); setScore(0); setDone(false); };
+
+  if (done) {
+    const good = score >= 4;
+    return (
+      <div style={{ ...styles.card, textAlign: "center", padding: 28, animation: "rise .35s ease" }}>
+        <div style={{ fontSize: 40, marginBottom: 8 }}>{good ? "🎉" : "💪"}</div>
+        <div style={{ fontWeight: 800, fontSize: 19, marginBottom: 6 }}>{score} من {QUIZ.length} صح</div>
+        <div style={{ color: "#8a8a8a", fontSize: 13.5, marginBottom: 20, lineHeight: 1.7 }}>{good ? "معلوماتك عن نظامك الغذائي كويسة جدًا، كمّل كده!" : "مفيش مشكلة، راجع الكروت في التثقيف وجرب تاني."}</div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={restart} style={{ ...styles.primaryBtn, marginTop: 0, background: SAND, color: DEEP, border: `1px solid ${LINE}` }}><IRotate size={16} /> اعاد المحاولة</button>
+          <button onClick={onExit} style={{ ...styles.primaryBtn, marginTop: 0 }}>رجوع للتثقيف</button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div style={{ animation: "rise .35s ease" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <button onClick={onExit} style={{ ...styles.iconBtn, width: "auto", padding: "6px 10px", display: "flex", gap: 6 }}><IArrowLeft size={15} /> رجوع</button>
+        <div style={{ fontSize: 13, color: "#8a8a8a", fontWeight: 700 }}>سؤال {i + 1} من {QUIZ.length}</div>
+      </div>
+      <div style={{ height: 5, background: LINE, borderRadius: 5, marginBottom: 18, overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${((i + (picked !== null ? 1 : 0)) / QUIZ.length) * 100}%`, background: DEEP, transition: "width .3s" }} />
+      </div>
+      <div style={styles.card}>
+        <div style={{ fontWeight: 800, fontSize: 16.5, marginBottom: 16, lineHeight: 1.6 }}>{q.q}</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {q.options.map((opt, idx) => {
+            let bg = "#fff", border = LINE, color = INK;
+            if (picked !== null) {
+              if (idx === q.correct) { bg = "#EAF4EE"; border = SAGE; color = SAGE; }
+              else if (idx === picked) { bg = "#FBEAE8"; border = CORAL; color = CORAL; }
+            }
+            return (
+              <button key={idx} onClick={() => choose(idx)} style={{ textAlign: "right", padding: "13px 14px", borderRadius: 12, border: `1.5px solid ${border}`, background: bg, color, fontSize: 14.5, fontWeight: 700, cursor: picked === null ? "pointer" : "default", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                {opt}
+                {picked !== null && idx === q.correct && <ICheck size={17} color={SAGE} />}
+                {picked !== null && idx === picked && idx !== q.correct && <IX size={17} color={CORAL} />}
+              </button>
+            );
+          })}
+        </div>
+        {picked !== null && <div style={{ marginTop: 14, background: SAND, borderRadius: 12, padding: 12, fontSize: 13.5, lineHeight: 1.7, color: "#444", display: "flex", gap: 8 }}><IInfo size={16} color={DEEP} />{q.exp}</div>}
+      </div>
+      {picked !== null && <button onClick={next} style={styles.primaryBtn}>{i + 1 >= QUIZ.length ? "اعرض النتيجة" : "السؤال اللي بعده"}</button>}
+    </div>
+  );
+}
+
+function KidneyAnim({ healthy }) {
+  const bloodColor = healthy ? "#C4453B" : "#7a2f2a";
+  const cleanColor = healthy ? "#5C8A6E" : "#8a8a8a";
+  const wasteColor = healthy ? "#D9A441" : "#C4453B";
+  return (
+    <div style={{ position: "relative", width: 220, height: 220, margin: "0 auto" }}>
+      <svg width="220" height="220" viewBox="0 0 220 220">
+        <rect x="20" y="10" width="180" height="200" rx="90" fill="none" stroke="#E4DFD3" strokeWidth="2" strokeDasharray="4 6" />
+        <path id="arteryPath" d="M 30 90 Q 60 90 78 100" fill="none" stroke={bloodColor} strokeWidth="6" strokeLinecap="round" opacity="0.85" />
+        <path d="M110 60 C145 60 150 90 150 110 C150 135 140 160 112 160 C90 160 80 145 88 128 C96 138 108 132 104 118 C100 106 90 110 86 100 C80 84 92 60 110 60 Z"
+          fill={healthy ? "#C4453B" : "#8B4A44"} opacity="0.9" />
+        <path d="M110 60 C145 60 150 90 150 110 C150 135 140 160 112 160 C90 160 80 145 88 128"
+          fill="none" stroke="#7a2f2a" strokeWidth="2" opacity="0.5" />
+        <path id="veinPath" d="M 78 118 Q 60 118 30 118" fill="none" stroke={cleanColor} strokeWidth="6" strokeLinecap="round" opacity="0.85" />
+        <path id="ureterPath" d="M110 160 Q 108 180 110 195" fill="none" stroke={wasteColor} strokeWidth="5" strokeLinecap="round" opacity="0.85" />
+        <ellipse cx="110" cy="205" rx="16" ry="10" fill={healthy ? "#D9A441" : "#5a4a2a"} opacity="0.85" />
+
+        {healthy ? (
+          <>
+            {[0, 0.33, 0.66].map((d, i) => (
+              <circle key={"a" + i} r="4" fill={bloodColor}>
+                <animateMotion dur="1.8s" begin={`${d}s`} repeatCount="indefinite" path="M 30 90 Q 60 90 78 100" />
+              </circle>
+            ))}
+            {[0, 0.4, 0.8].map((d, i) => (
+              <circle key={"v" + i} r="4" fill={cleanColor}>
+                <animateMotion dur="1.6s" begin={`${d}s`} repeatCount="indefinite" path="M 78 118 Q 60 118 30 118" />
+              </circle>
+            ))}
+            {[0, 0.6].map((d, i) => (
+              <circle key={"u" + i} r="3" fill={wasteColor}>
+                <animateMotion dur="1.4s" begin={`${d}s`} repeatCount="indefinite" path="M110 160 Q 108 180 110 195" />
+              </circle>
+            ))}
+          </>
+        ) : (
+          <>
+            <circle r="4" fill={bloodColor}>
+              <animateMotion dur="3s" repeatCount="indefinite" path="M 30 90 Q 60 90 78 100" />
+            </circle>
+            {[0, 0.4, 0.8, 1.2, 1.6].map((d, i) => (
+              <circle key={"jam" + i} cx={95 + i * 6} cy={108 + (i % 2) * 8} r="4.5" fill={CORAL} opacity="0.9">
+                <animate attributeName="opacity" values="0.5;1;0.5" dur="1.2s" begin={`${d * 0.2}s`} repeatCount="indefinite" />
+              </circle>
+            ))}
+          </>
+        )}
+      </svg>
+      {!healthy && (
+        <div style={{ position: "absolute", top: 6, left: 6, background: CORAL, color: "#fff", fontSize: 10, fontWeight: 800, padding: "3px 8px", borderRadius: 20 }}>
+          سموم متراكمة
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Onboarding({ onDone }) {
+  const [step, setStep] = useState(0), [v, setV] = useState("1000");
+  const slides = [
+    { icon: "💧", title: "أهلاً بيك في رِفيق", body: "تطبيق بيساعدك تتابع سوائلك ووزنك وتفهم نظامك الغذائي وانت على الغسيل الكلوي — يوم بيوم." },
+    { anim: "healthy", title: "الكلى السليمة بتشتغل كده", body: "الكلى بتفلتر الدم كل ثانية — بتسحب السموم والمياه الزيادة وبتحوّلها بول، وبترجّع الدم نضيف تاني للجسم. شغل مستمر ٢٤ ساعة." },
+    { anim: "sick", title: "لما الكلى تتعب", body: "في الفشل الكلوي، الكلى مبقتش تقدر تفلتر كويس — السموم والمياه الزيادة بتتراكم في الدم بدل ما تتشال. عشان كده الغسيل الكلوي بيعمل شغل الكلى بدلها، والنظام الغذائي بيقلل الحمل عليها." },
+  ];
+  return (
+    <div dir="rtl" style={{ ...styles.app, minHeight: "100vh", justifyContent: "center", alignItems: "center", display: "flex" }}>
+      <div style={{ width: "100%", maxWidth: 380, padding: 28, textAlign: "center" }}>
+        {step < slides.length ? (
+          <>
+            {slides[step].anim ? <KidneyAnim healthy={slides[step].anim === "healthy"} /> : <div style={{ fontSize: 56, marginBottom: 18 }}>{slides[step].icon}</div>}
+            <div style={{ fontWeight: 800, fontSize: 21, marginTop: 14, marginBottom: 10 }}>{slides[step].title}</div>
+            <div style={{ color: "#666", fontSize: 14.5, lineHeight: 1.8, marginBottom: 22 }}>{slides[step].body}</div>
+            <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 18 }}>
+              {slides.map((_, i) => <div key={i} style={{ width: i === step ? 20 : 7, height: 7, borderRadius: 6, background: i === step ? DEEP : LINE, transition: "all .25s" }} />)}
+            </div>
+            <button onClick={() => setStep(step + 1)} style={styles.primaryBtn}>{step === slides.length - 1 ? "فهمت، يلا نبدأ" : "التالي"}</button>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: 44, marginBottom: 14 }}>🥤</div>
+            <div style={{ fontWeight: 800, fontSize: 19, marginBottom: 10 }}>الحد اليومي بتاعك كام مل؟</div>
+            <input value={v} onChange={(e) => setV(e.target.value.replace(/\D/g, ""))} inputMode="numeric" style={{ ...styles.input, textAlign: "center", fontSize: 22, fontWeight: 800, color: DEEP }} />
+            <div style={{ fontSize: 12, color: "#999", marginTop: 8, marginBottom: 22 }}>تقدر تغيّرها بعدين من الرئيسية في أي وقت</div>
+            <button onClick={() => { const n = parseInt(v, 10); onDone(n > 0 ? n : 1000); }} style={styles.primaryBtn}>ابدأ المتابعة</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Sheet({ title, onClose, children }) {
+  return (
+    <div style={styles.overlay} onClick={onClose}>
+      <div style={styles.sheet} onClick={(e) => e.stopPropagation()}>
+        <div style={styles.sheetHandle} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <div style={{ fontWeight: 800, fontSize: 17 }}>{title}</div>
+          <button onClick={onClose} style={styles.iconBtn}><IX size={18} /></button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function AddFluidSheet({ onClose, onAdd }) {
+  const [custom, setCustom] = useState("");
+  return (
+    <Sheet title="سجّل سوائل" onClose={onClose}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 16 }}>
+        {QUICK_ITEMS.map((it) => (
+          <button key={it.label} onClick={() => onAdd(it.ml)} style={styles.quickChip}>
+            <div style={{ fontSize: 22 }}>{it.icon}</div><div style={{ fontSize: 12.5, fontWeight: 700 }}>{it.label}</div><div style={{ fontSize: 11, color: "#999" }}>{it.ml} مل</div>
+          </button>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input value={custom} onChange={(e) => setCustom(e.target.value.replace(/\D/g, ""))} placeholder="كمية تانية بالمللي" inputMode="numeric" style={styles.input} />
+        <button onClick={() => { if (custom) { onAdd(parseInt(custom, 10)); setCustom(""); } }} style={{ ...styles.primaryBtn, width: 110, marginTop: 0 }}>سجّل</button>
+      </div>
+    </Sheet>
+  );
+}
+
+function AddWeightSheet({ onClose, onAdd }) {
+  const [pre, setPre] = useState(""), [post, setPost] = useState("");
+  const gain = pre && post ? (parseFloat(post) - parseFloat(pre)).toFixed(1) : null;
+  return (
+    <Sheet title="سجّل وزن الجلسة" onClose={onClose}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div><label style={styles.fieldLabel}>الوزن قبل الجلسة (كجم)</label><input value={pre} onChange={(e) => setPre(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" style={styles.input} /></div>
+        <div><label style={styles.fieldLabel}>الوزن بعد الجلسة (كجم)</label><input value={post} onChange={(e) => setPost(e.target.value.replace(/[^\d.]/g, ""))} inputMode="decimal" style={styles.input} /></div>
+        {gain !== null && !isNaN(gain) && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: gain > 3 ? CORAL : gain > 2 ? AMBER : SAGE, fontWeight: 700 }}>
+            {gain > 2 ? <IAlert size={16} /> : <ICheck size={16} />} الفرق: {gain} كجم
+          </div>
+        )}
+        <button onClick={() => { if (pre && post) onAdd(parseFloat(pre), parseFloat(post)); }} style={styles.primaryBtn}>حفظ</button>
+      </div>
+    </Sheet>
+  );
+}
+
+function EditLimitSheet({ limit, onClose, onSave }) {
+  const [v, setV] = useState(String(limit));
+  return (
+    <Sheet title="الحد اليومي للسوائل" onClose={onClose}>
+      <div style={{ fontSize: 13, color: "#888", marginBottom: 10, lineHeight: 1.7 }}>اسأل دكتورك عن الكمية المسموحة بالظبط ليك، وحطّها هنا عشان نساعدك تتابعها.</div>
+      <input value={v} onChange={(e) => setV(e.target.value.replace(/\D/g, ""))} inputMode="numeric" style={styles.input} />
+      <button onClick={() => { const n = parseInt(v, 10); if (n > 0) onSave(n); }} style={styles.primaryBtn}>حفظ</button>
+    </Sheet>
+  );
+}
+
+function NavBtn({ active, onClick, icon, label }) {
+  return <button onClick={onClick} style={{ ...styles.navBtn, color: active ? DEEP : "#9aa39a" }}>{icon}<span style={{ fontSize: 11, fontWeight: active ? 800 : 600 }}>{label}</span></button>;
+}
+
+const styles = {
+  app: { fontFamily: "'Tajawal', sans-serif", background: SAND, minHeight: "100vh", display: "flex", flexDirection: "column", color: INK, maxWidth: 480, margin: "0 auto" },
+  header: { padding: "22px 20px 16px", background: DEEP, color: "#fff", borderRadius: "0 0 22px 22px" },
+  brandRow: { display: "flex", alignItems: "center", gap: 10 },
+  brandMark: { width: 34, height: 34, borderRadius: 10, background: "rgba(255,255,255,.18)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 17 },
+  brandName: { fontSize: 21, fontWeight: 800 },
+  brandSub: { fontSize: 12.5, opacity: 0.85, marginTop: 4, marginRight: 44 },
+  main: { flex: 1, padding: "16px 16px 100px", overflowY: "auto" },
+  card: { background: CARD, borderRadius: 18, padding: 18, boxShadow: "0 1px 3px rgba(14,43,43,.06)", border: `1px solid ${LINE}` },
+  cardTitle: { fontWeight: 800, fontSize: 15.5 },
+  sectionTitle: { fontWeight: 800, fontSize: 14.5, marginBottom: 10, color: "#555" },
+  miniLabel: { fontSize: 12.5, color: "#8a8a8a", marginBottom: 4 },
+  primaryBtn: { width: "100%", marginTop: 14, background: DEEP, color: "#fff", border: "none", borderRadius: 12, padding: "12px 0", fontFamily: "inherit", fontWeight: 800, fontSize: 14.5, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer" },
+  linkBtn: { background: "none", border: "none", color: DEEP, fontFamily: "inherit", fontSize: 12.5, fontWeight: 700, cursor: "pointer", padding: 0 },
+  logRow: { background: CARD, border: `1px solid ${LINE}`, borderRadius: 12, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" },
+  logDot: { width: 8, height: 8, borderRadius: 8, background: DEEP },
+  iconBtn: { background: "#F1EEE6", border: "none", borderRadius: 8, width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#888" },
+  empty: { textAlign: "center", color: "#9a9a9a", fontSize: 13.5, padding: "22px 10px", background: "#fff", borderRadius: 14, border: `1px dashed ${LINE}` },
+  nav: { position: "sticky", bottom: 0, background: "#fff", borderTop: `1px solid ${LINE}`, display: "flex", padding: "8px 6px 12px", maxWidth: 480, margin: "0 auto", width: "100%" },
+  navBtn: { flex: 1, background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "6px 0", cursor: "pointer", fontFamily: "inherit" },
+  overlay: { position: "fixed", inset: 0, background: "rgba(14,43,43,.35)", display: "flex", alignItems: "flex-end", zIndex: 50 },
+  sheet: { background: "#fff", width: "100%", maxWidth: 480, margin: "0 auto", borderRadius: "22px 22px 0 0", padding: "10px 20px 28px", animation: "rise .25s ease" },
+  sheetHandle: { width: 40, height: 4, background: LINE, borderRadius: 4, margin: "4px auto 14px" },
+  quickChip: { background: SAND, border: `1px solid ${LINE}`, borderRadius: 14, padding: "12px 4px", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, cursor: "pointer", fontFamily: "inherit" },
+  input: { flex: 1, border: `1px solid ${LINE}`, borderRadius: 12, padding: "12px 14px", fontSize: 15, fontFamily: "inherit", width: "100%", background: "#fff" },
+  fieldLabel: { fontSize: 12.5, color: "#888", marginBottom: 6, display: "block", fontWeight: 700 },
+  toast: { position: "fixed", bottom: 90, left: "50%", transform: "translateX(-50%)", background: INK, color: "#fff", padding: "10px 18px", borderRadius: 30, fontSize: 13.5, fontWeight: 700, zIndex: 60, animation: "rise .25s ease" },
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
